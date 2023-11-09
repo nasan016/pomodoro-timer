@@ -30,7 +30,7 @@ type Timer struct {
 
 func initTimer() Timer {
 	return Timer{
-		studyDuration:     5 * time.Second,
+		studyDuration:     20 * time.Second,
 		breakDuration:     4 * time.Second,
 		longBreakDuration: 5 * time.Second,
 		Pause:             initPaused(),
@@ -59,7 +59,6 @@ func main() {
 		//timer methods
 		timer.changePauseStatus()
 		timer.changeText()
-		timer.startPauseTimer()
 
 		minutes := int(remainingTime.Minutes())
 		seconds := int(remainingTime.Seconds()) % 60
@@ -72,10 +71,15 @@ func main() {
 		timeTextSize := rl.MeasureText(timeText, 150)
 		pauseTextSize := rl.MeasureText(pauseText, 20)
 
-		if timer.Pause.isPaused {
+		if !timer.Pause.isPaused {
+			endTime = endTime.Add(timer.Pause.pauseDuration)
 			remainingTime = endTime.Sub(time.Now())
-			timer.Pause.pauseDuration = time.Since(timer.Pause.pauseStartTime)
+
+			timer.Pause.pauseDuration = 0 * time.Second
+
 		} else {
+
+			timer.Pause.pauseDuration = time.Since(timer.Pause.pauseStartTime)
 		}
 
 		rl.BeginDrawing()
@@ -94,6 +98,7 @@ func main() {
 func (t *Timer) changePauseStatus() {
 	if rl.IsKeyPressed(rl.KeySpace) {
 		t.Pause.isPaused = !t.Pause.isPaused
+		t.Pause.pauseStartTime = time.Now()
 	}
 }
 
@@ -102,13 +107,5 @@ func (t *Timer) changeText() {
 		t.Pause.text = "to unpause the timer"
 	} else {
 		t.Pause.text = "to pause the timer"
-	}
-}
-
-func (t *Timer) startPauseTimer() {
-	if t.Pause.isPaused {
-
-	} else {
-
 	}
 }
