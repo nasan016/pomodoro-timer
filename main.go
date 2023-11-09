@@ -16,7 +16,7 @@ type Paused struct {
 
 func initPaused() Paused {
 	return Paused{
-		isPaused: false,
+		isPaused: true,
 		text:     "to unpause the timer",
 	}
 }
@@ -30,9 +30,9 @@ type Timer struct {
 
 func initTimer() Timer {
 	return Timer{
-		studyDuration:     20 * time.Second,
-		breakDuration:     4 * time.Second,
-		longBreakDuration: 5 * time.Second,
+		studyDuration:     25 * time.Minute,
+		breakDuration:     5 * time.Minute,
+		longBreakDuration: 15 * time.Minute,
 		Pause:             initPaused(),
 	}
 }
@@ -47,11 +47,15 @@ func main() {
 		timer         Timer
 		endTime       time.Time
 		remainingTime time.Duration
+
+		statusTracker int
 	)
 
 	timer = initTimer()
 	endTime = time.Now().Add(timer.studyDuration)
 	remainingTime = endTime.Sub(time.Now())
+	timer.Pause.pauseStartTime = time.Now()
+	statusTracker = 0
 
 	rl.InitWindow(screenWidth, screenHeight, "Pomodoro")
 
@@ -71,14 +75,42 @@ func main() {
 		timeTextSize := rl.MeasureText(timeText, 150)
 		pauseTextSize := rl.MeasureText(pauseText, 20)
 
+		if remainingTime <= 0 {
+
+			if statusTracker == 7 {
+				statusTracker = 0
+			} else {
+				statusTracker++
+			}
+
+			if statusTracker%2 == 0 {
+				endTime = time.Now().Add(timer.studyDuration + 1*time.Second)
+
+			} else {
+				if statusTracker == 7 {
+					endTime = time.Now().Add(timer.longBreakDuration + 1*time.Second)
+				} else {
+					endTime = time.Now().Add(timer.breakDuration + 1*time.Second)
+				}
+			}
+
+		}
+
+		if statusTracker%2 == 0 {
+			statusText = "STUDY"
+		} else {
+			if statusTracker == 3 {
+				statusText = "LONG BREAK"
+			}
+			statusText = "BREAK"
+		}
+
 		if !timer.Pause.isPaused {
 			endTime = endTime.Add(timer.Pause.pauseDuration)
 			remainingTime = endTime.Sub(time.Now())
 
 			timer.Pause.pauseDuration = 0 * time.Second
-
 		} else {
-
 			timer.Pause.pauseDuration = time.Since(timer.Pause.pauseStartTime)
 		}
 
